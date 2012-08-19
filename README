@@ -1,3 +1,11 @@
+
+FORK of https://github.com/erdavila/Recurrence
+
+[ ] add year recurrence capability
+[ ] rrule type count() method (number of recurrences between two dates)
+
+--------------------------------------------------------------------------------
+
 This is a library that implements rules for recurring events.
 These are the types of recurrence that the library implements:
 

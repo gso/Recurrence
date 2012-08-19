@@ -134,10 +134,15 @@ class MonthsBasedRecurrence(Recurrence):
 	
 	def _date_for_yearmonth(self, ym):
 		if self.day == DAY_OF_MONTH:
+			last_date_of_month = ym.get_last_day()
 			if self.ordinal < 0:
-				return ym.get_last_day() + datetime.timedelta(days=self.ordinal+1)
+				return last_date_of_month + datetime.timedelta(days=self.ordinal+1)
 			else:
-				return ym.get_date(self.ordinal)
+				last_day_of_month = last_date_of_month.day
+				if self.ordinal > last_day_of_month:
+					return ym.get_date(last_day_of_month)
+				else:
+					return ym.get_date(self.ordinal)
 		else:
 			if self.ordinal < 0:
 				last_date_of_month = ym.get_last_day()
