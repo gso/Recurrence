@@ -3,7 +3,7 @@ import datetime
 import yearmonth
 
 
-DAY_OF_MONTH = 'DAY_OF_MONTH'
+DAY_OF_PERIOD = 'DAY_OF_PERIOD'
 
 # Values returned by datetime.date.weekday()
 MON = MONDAY    = 0
@@ -88,11 +88,11 @@ class DaysBasedRecurrence(Recurrence):
 
 class MonthsBasedRecurrence(Recurrence):
 	
-	def __init__(self, anchor, period, ordinal, day=DAY_OF_MONTH):
+	def __init__(self, anchor, period, ordinal, day=DAY_OF_PERIOD):
 		if not isinstance(anchor, yearmonth.YearMonth):
 			raise ValueError('Invalid anchor instance: ' + repr(anchor))
 		
-		if day not in (DAY_OF_MONTH, SUN, MON, TUE, WED, THU, FRI, SAT):
+		if day not in (DAY_OF_PERIOD, SUN, MON, TUE, WED, THU, FRI, SAT):
 			raise ValueError('Invalid day: ' + repr(day))
 		
 		self.anchor = anchor
@@ -102,7 +102,7 @@ class MonthsBasedRecurrence(Recurrence):
 	
 	def get_occurrence(self, number):
 		ym = self.anchor + number * self.period
-		return self._date_for_yearmonth(ym)
+		return self._date_for_period(ym)
 	
 	def is_occurrence(self, candidate_occurrence):
 		ym = yearmonth.YearMonth.from_date(candidate_occurrence)
@@ -110,12 +110,12 @@ class MonthsBasedRecurrence(Recurrence):
 		if delta % self.period != 0:
 			return False
 		else:
-			return self._date_for_yearmonth(ym) == candidate_occurrence
+			return self._date_for_period(ym) == candidate_occurrence
 	
 	def get_occurrence_number(self, occurrence):
 		ym = yearmonth.YearMonth.from_date(occurrence)
 		delta = ym - self.anchor
-		if delta % self.period == 0 and self._date_for_yearmonth(ym) == occurrence:
+		if delta % self.period == 0 and self._date_for_period(ym) == occurrence:
 			return delta // self.period
 		else:
 			raise ValueError('The date %r is not a valid occurrence' % occurrence)
@@ -126,35 +126,39 @@ class MonthsBasedRecurrence(Recurrence):
 		remainder = delta % self.period
 		if remainder != 0:
 			ym += self.period - remainder
-		occurrence = self._date_for_yearmonth(ym)
+		occurrence = self._date_for_period(ym)
 		if remainder == 0 and occurrence <= date:
 			ym += self.period
-			occurrence = self._date_for_yearmonth(ym)
+			occurrence = self._date_for_period(ym)
 		return occurrence
 	
-	def _date_for_yearmonth(self, ym):
-		if self.day == DAY_OF_MONTH:
-			last_date_of_month = ym.get_last_day()
+	def _date_for_period(self, ym):
+		# TODO assert period > 0
+		period_lower_bound_date = ym.get_first_day()
+		period_ym_upper_bound = ym + self.period - 1
+		period_upper_bound_date = period_ym_upper_bound.get_last_day()
+		period_ym_ceil = ym + self.period
+		period_ceil_date = period_ym_ceil.get_first_day()
+		if self.day == DAY_OF_PERIOD:
 			if self.ordinal < 0:
-				return last_date_of_month + datetime.timedelta(days=self.ordinal+1)
+				return period_upper_bound_date + datetime.timedelta(days=self.ordinal+1)
 			else:
-				last_day_of_month = last_date_of_month.day
-				if self.ordinal > last_day_of_month:
-					return ym.get_date(last_day_of_month)
+				period_delta = period_ceil_date - period_lower_bound_date
+				if self.ordinal > period_delta.days:
+					return period_upper_bound_date
 				else:
-					return ym.get_date(self.ordinal)
+					return period_lower_bound_date + datetime.timedelta(days=self.ordinal-1)
 		else:
 			if self.ordinal < 0:
-				last_date_of_month = ym.get_last_day()
-				last_day_of_week = last_date_of_month.weekday()
-				last_day_of_month = last_date_of_month.day
-				day_of_month = last_day_of_month  - (7 - self.day + last_day_of_week ) % 7 + 7 * (self.ordinal + 1)
-				return ym.get_date(day_of_month)
+				last_day_of_period = period_upper_bound_date.day
+				last_day_of_week = period_upper_bound_date.weekday()
+				day_of_period = last_day_of_period  - (7 - self.day + last_day_of_week ) % 7 + 7 * (self.ordinal + 1)
+				return period_lower_bound_date + datetime.timedelta(days=day_of_period-1)
 			else:
-				first_day_of_week = ym.get_first_day().weekday()
-				first_day_of_month = 1
-				day_of_month = first_day_of_month + (7 + self.day - first_day_of_week) % 7 + 7 * (self.ordinal - 1)
-				return ym.get_date(day_of_month)
+				first_day_of_period = 1
+				first_day_of_week = period_lower_bound_date.weekday()
+				day_of_period = first_day_of_period + (7 + self.day - first_day_of_week) % 7 + 7 * (self.ordinal - 1)
+				return period_lower_bound_date + datetime.timedelta(days=day_of_period-1)
 	
 	def __setattr__(self, attr, value):
 		if attr in ('anchor', 'period', 'ordinal', 'day') and hasattr(self, attr):
@@ -171,3 +175,4 @@ class MonthsBasedRecurrence(Recurrence):
 	
 	def __hash__(self):
 		return hash(self.anchor) ^ hash(self.period) ^ hash(self.ordinal) ^ hash(self.day)  
+
