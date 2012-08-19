@@ -1,7 +1,7 @@
 
 FORK of https://github.com/erdavila/Recurrence
 
-[X] fix bug in 'def _date_for_yearmonth(self, ym):' method (ref. issue #2)
+[X] fix bug in 'def _date_for_yearmonth(self, ym):' method (ref. issue #2 https://github.com/erdavila/Recurrence/issues/2 )
 [ ] add year recurrence capability
 
  
