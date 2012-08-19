@@ -14,12 +14,7 @@ d = rc.get_occurrence(1)
 print(d)
 
 
-# check can now recur on any day in a period,
-# though note the algorithm:
-# i) does not accommodate a case of e.g. the last 
-# day of the 3rd mnth in a 5 mnth period
-# ii) does not accommodate a case of e.g. the first
-# Mon in the first full week of the month
+# check can now recur on any day in a period
 
 ym = YearMonth(2012, 1)
 rc = recurrence.MonthsBasedRecurrence(ym, 2, -1)
